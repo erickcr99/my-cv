@@ -1,0 +1,36 @@
+# ============================================
+# 🔒 ARCHIVOS DE ENTORNO — NUNCA SUBIR A GIT
+# ============================================
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# ============================================
+# Next.js
+# ============================================
+/.next/
+/out/
+/build/
+next-env.d.ts
+
+# ============================================
+# Node.js
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ============================================
+# Misceláneos
+# ============================================
+.DS_Store
+*.pem
+.vercel
+*.tsbuildinfo
