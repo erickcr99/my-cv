@@ -25,17 +25,20 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-          ? "nav-scrolled"
-          : "nav-top"
+        ? "nav-scrolled"
+        : "nav-top"
         }`}
     >
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
+      <div className="max-w-6xl mx-auto px-6 h-16" style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center" }}>
         <a href="#" className="nav-logo">
           A<span className="nav-logo-dot">.</span>E
         </a>
 
+        {/* Spacer central */}
+        <div />
+
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-12">
+        <div className="hidden md:flex items-center gap-10">
           {navLinks.map((link) => (
             <a key={link.href} href={link.href} className="nav-link">
               {link.label}
