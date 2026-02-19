@@ -26,7 +26,9 @@ async function logToSheets(
 
     if (!email || !rawKey || !sheetId) return; // Si no están configuradas, omitir silenciosamente
 
-    const privateKey = rawKey.replace(/\\n/g, "\n");
+    const privateKey = rawKey.startsWith("-----")
+      ? rawKey.replace(/\\n/g, "\n")   // formato raw con \n escapados
+      : Buffer.from(rawKey, "base64").toString("utf8"); // formato base64 (recomendado para Vercel)
 
     const auth = new google.auth.JWT({
       email,

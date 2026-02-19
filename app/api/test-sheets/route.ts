@@ -20,7 +20,9 @@ export async function GET() {
     }
 
     try {
-        const privateKey = rawKey.replace(/\\n/g, "\n");
+        const privateKey = rawKey.startsWith("-----")
+            ? rawKey.replace(/\\n/g, "\n")
+            : Buffer.from(rawKey, "base64").toString("utf8");
 
         const auth = new google.auth.JWT({
             email,
