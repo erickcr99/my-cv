@@ -18,7 +18,6 @@ export default function Navbar() {
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-
     handleResize();
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", handleResize);
@@ -28,26 +27,50 @@ export default function Navbar() {
     };
   }, []);
 
+  const navStyle: React.CSSProperties = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    transition: "all 0.5s ease",
+    background: scrolled ? "rgba(12, 12, 15, 0.85)" : "transparent",
+    backdropFilter: scrolled ? "blur(16px)" : "none",
+    borderBottom: scrolled ? "1px solid #2e2e38" : "none",
+  };
+
+  const innerStyle: React.CSSProperties = {
+    maxWidth: "72rem",
+    width: "100%",
+    margin: "0 auto",
+    padding: "0 1.5rem",
+    height: "4rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    boxSizing: "border-box",
+  };
+
+  const linksStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "2.5rem",
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+  };
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "nav-scrolled" : "nav-top"}`}>
-      {/* Barra principal */}
-      <div style={{
-        maxWidth: "72rem",
-        margin: "0 auto",
-        padding: "0 1.5rem",
-        height: "4rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}>
+    <nav style={navStyle}>
+      <div style={innerStyle}>
         {/* Logo */}
         <a href="#" className="nav-logo">
           A<span className="nav-logo-dot">.</span>E
         </a>
 
-        {/* Desktop links — solo visibles si no es móvil */}
+        {/* Desktop links */}
         {!isMobile && (
-          <div style={{ display: "flex", alignItems: "center", gap: "2.5rem" }}>
+          <div style={linksStyle}>
             {navLinks.map((link) => (
               <a key={link.href} href={link.href} className="nav-link">
                 {link.label}
@@ -56,7 +79,7 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Hamburger — solo en móvil */}
+        {/* Hamburger — móvil */}
         {isMobile && (
           <button
             className="nav-hamburger"
