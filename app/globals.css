@@ -1045,7 +1045,8 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.9rem;
-  font-size: 0.88rem;
+  /* ⚠️ FIX MOBILE ZOOM: iOS/Android hacen zoom si font-size < 16px */
+  font-size: 16px;
   color: var(--text-primary);
   font-family: var(--font-body);
   outline: none;
@@ -1164,7 +1165,9 @@ body {
   .md\:text-left {
     text-align: left;
   }
-}/* 
+}
+
+/* 
    TAILWIND UTILITIES (ENSURE THEY WORK)
     */
 .max-w-6xl {
@@ -1221,11 +1224,11 @@ body {
   .md\:flex {
     display: flex;
   }
-  
+
   .md\:hidden {
     display: none;
   }
-  
+
   .md\:flex-row {
     flex-direction: row;
   }
@@ -1263,7 +1266,7 @@ body {
     text-align: center;
     gap: 2rem;
   }
-  
+
   .hero-profile-image {
     width: 150px;
     height: 150px;

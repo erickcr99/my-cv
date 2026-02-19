@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,17 +17,44 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
 
+  // Scroll al último mensaje
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Focus al input cuando se abre el chat
   useEffect(() => {
     if (isOpen) {
-      inputRef.current?.focus();
+      // Pequeño delay para que la animación del chat termine primero
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 350);
     }
+  }, [isOpen]);
+
+  // FIX MOBILE: Cuando el teclado sube (visualViewport shrinks), hacer scroll
+  // al input para que sea visible sin que el usuario tenga que hacer nada
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleViewportResize = () => {
+      if (!window.visualViewport) return;
+      // Si el viewport se redujo (teclado abierto), scrollear el chat al input
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 100);
+    };
+
+    window.visualViewport?.addEventListener("resize", handleViewportResize);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportResize);
+    };
   }, [isOpen]);
 
   const sendMessage = async () => {
@@ -53,7 +80,6 @@ export default function Chatbot() {
       }
 
       if (data.offTopic) {
-        // Mostrar mensaje de rechazo, bloquear input y cerrar el chat
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: data.reply },
@@ -79,12 +105,26 @@ export default function Chatbot() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // FIX DESKTOP: Enter envía el mensaje (shift+Enter no lo envía)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       sendMessage();
     }
   };
+
+  // FIX MOBILE: Al hacer focus en el input, esperar a que suba el teclado
+  // y luego hacer scroll para que el input sea visible
+  const handleInputFocus = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      chatWindowRef.current?.scrollTo({
+        top: chatWindowRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }, 350);
+  }, []);
 
   return (
     <>
@@ -108,7 +148,7 @@ export default function Chatbot() {
 
       {/* Chat window */}
       {isOpen && (
-        <div className="chat-window">
+        <div className="chat-window" ref={chatWindowRef}>
           {/* Header */}
           <div className="chat-header">
             <div className="chat-header-info">
@@ -167,10 +207,13 @@ export default function Chatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onFocus={handleInputFocus}
                 placeholder="Escribe tu pregunta..."
                 maxLength={500}
                 className="chat-input"
                 disabled={isLoading}
+                // FIX MOBILE ZOOM: enterkeyhint muestra "send" en teclado móvil
+                enterKeyHint="send"
               />
               <button
                 onClick={sendMessage}
