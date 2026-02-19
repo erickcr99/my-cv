@@ -50,7 +50,7 @@ async function logToSheets(
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: "Sheet1!A:E",
+      range: "'CV Chatbot Logs'!A:E",
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [[now, partialIp, userMessage, botReply, offTopic ? "Sí" : "No"]],
