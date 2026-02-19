@@ -57,7 +57,8 @@ export default function Chatbot() {
     };
   }, [isOpen]);
 
-  const sendMessage = async () => {
+  // useCallback garantiza que sendMessage siempre lea el valor más reciente de `input`
+  const sendMessage = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
@@ -103,16 +104,16 @@ export default function Chatbot() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading]);
 
-  // FIX DESKTOP: Enter envía el mensaje (shift+Enter no lo envía)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // FIX DESKTOP: Enter envía el mensaje — useCallback para evitar closure stale
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
       sendMessage();
     }
-  };
+  }, [sendMessage]);
 
   // FIX MOBILE: Al hacer focus en el input, esperar a que suba el teclado
   // y luego hacer scroll para que el input sea visible
