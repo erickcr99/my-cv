@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { google } from "googleapis";
 
 // Rate limiting simple en memoria (para producción usa Redis)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -9,6 +10,54 @@ function getRateLimitKey(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
   const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
   return ip;
+}
+
+// ─── Google Sheets Logger ──────────────────────────────────────────────────
+async function logToSheets(
+  ip: string,
+  userMessage: string,
+  botReply: string,
+  offTopic: boolean
+) {
+  try {
+    const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const rawKey = process.env.GOOGLE_PRIVATE_KEY;
+    const sheetId = process.env.GOOGLE_SHEET_ID;
+
+    if (!email || !rawKey || !sheetId) return; // Si no están configuradas, omitir silenciosamente
+
+    const privateKey = rawKey.replace(/\\n/g, "\n");
+
+    const auth = new google.auth.JWT({
+      email,
+      key: privateKey,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+
+    const sheets = google.sheets({ version: "v4", auth });
+
+    // Timestamp en hora de México
+    const now = new Date().toLocaleString("es-MX", {
+      timeZone: "America/Mexico_City",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    });
+
+    // IP parcial por privacidad (ej: 189.xxx.xxx.xxx)
+    const partialIp = ip.split(".").map((part, i) => (i === 0 ? part : "xxx")).join(".");
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range: "Sheet1!A:E",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[now, partialIp, userMessage, botReply, offTopic ? "Sí" : "No"]],
+      },
+    });
+  } catch (err) {
+    // El logging nunca debe romper el chat
+    console.error("Sheets logging error:", err);
+  }
 }
 
 function checkRateLimit(key: string): boolean {
@@ -158,11 +207,16 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = JSON.parse(rawContent);
       if (parsed.off_topic === true) {
+        // Log en segundo plano (sin await para no retrasar la respuesta)
+        logToSheets(key, message, parsed.message, true);
         return NextResponse.json({ reply: parsed.message, offTopic: true });
       }
     } catch {
       // No es JSON, respuesta normal
     }
+
+    // Log en segundo plano (sin await para no retrasar la respuesta)
+    logToSheets(key, message, rawContent, false);
 
     return NextResponse.json({ reply: rawContent });
   } catch (error) {
