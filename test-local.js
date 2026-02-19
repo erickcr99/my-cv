@@ -82,18 +82,28 @@ async function run() {
         const res = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
         console.log(`   ✅ ¡ÉXITO! Conectado a la hoja: "${res.data.properties.title}"`);
 
-        // Intento de escritura
-        console.log("\n3️⃣  Intentando escribir una fila de prueba...");
+        // Listar todas las pestañas para ver el nombre exacto
+        console.log("\n2.5️⃣  Pestañas encontradas en el Google Sheet:");
+        const sheetTabs = res.data.sheets || [];
+        sheetTabs.forEach((s, idx) => {
+            console.log(`   [${idx}] "${s.properties.title}"`);
+        });
+        const firstTabTitle = sheetTabs[0]?.properties?.title || 'Sheet1';
+
+        // Intento de escritura con nombre real de la primera pestaña
+        const rangeToUse = `'${firstTabTitle}'!A:E`;
+        console.log(`\n3️⃣  Intentando escribir en: ${rangeToUse}`);
         await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
-            range: "Sheet1!A:E",
+            range: rangeToUse,
             valueInputOption: "USER_ENTERED",
             requestBody: {
                 values: [[new Date().toISOString(), "DIAGNOSTICO LOCAL", "Test de conexión", "Funcionó OK", "N/A"]],
             },
         });
         console.log("   ✅ ¡ESCRITURA EXITOSA! Revisa tu Google Sheet ahora.");
-        console.log("   --> Si esto funcionó aquí pero falla en Vercel, el problema es CÓMO COPIASTE las variables en Vercel.");
+        console.log(`\n   ⚠️  NOMBRE EXACTO DE TU PESTAÑA: "${firstTabTitle}"`);
+        console.log(`   Actualiza en route.ts => range: "'${firstTabTitle}'!A:E"`);
 
     } catch (error) {
         console.error("\n❌ EROOR DE CONEXIÓN:");
